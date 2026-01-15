@@ -17,14 +17,14 @@ class OrderFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
 
     @factory.post_generation
-    def product(self, create, extracted, **kwargs):
+    def products(self, create, extracted, **kwargs):
 
         if not create:
             return
         
         if extracted:
             for product in extracted:
-                self.product.add(product)
+                self.products.add(product)
 
     class Meta:
         model = Order
