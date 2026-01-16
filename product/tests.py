@@ -6,6 +6,7 @@ from django.urls import reverse
 
 from product.factories import CategoryFactory, ProductFactory
 from product.models import Product, Category
+from order.factories import UserFactory
 
 class TestProductViewSet(APITestCase):
     client = APIClient()
@@ -25,11 +26,11 @@ class TestProductViewSet(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        product_data = json.loads(response.content)[0]
-        self.assertEqual(product_data['title'], self.product.title)
-        self.assertEqual(product_data['price'], self.product.price)
-        self.assertEqual(product_data['active'], self.product.active)
-        self.assertEqual(product_data['category'][0]['title'], self.category.title)
+        product_data = json.loads(response.content)
+        self.assertEqual(product_data['results'][0]['title'], self.product.title)
+        self.assertEqual(product_data['results'][0]['price'], self.product.price)
+        self.assertEqual(product_data['results'][0]['active'], self.product.active)
+        self.assertEqual(product_data['results'][0]['category'][0]['title'], self.category.title)
 
     def test_create_product(self):
         category = CategoryFactory()
@@ -66,8 +67,8 @@ class TestCategoryViewSet(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        category_data = json.loads(response.content)[0]
-        self.assertEqual(category_data['title'], self.category.title)
+        category_data = json.loads(response.content)
+        self.assertEqual(category_data['results'][0]['title'], self.category.title)
 
     def test_create_category(self):
         data = json.dumps({
