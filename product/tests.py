@@ -1,45 +1,89 @@
-import pytest
-from django.test import TestCase
+import json
+
+from rest_framework.test import APITestCase, APIClient
+from rest_framework import status
+from django.urls import reverse
+
+from product.factories import CategoryFactory, ProductFactory
 from product.models import Product, Category
+from order.factories import UserFactory
 
-
-class CategoryModelTest(TestCase):
-    """Test cases for Category model."""
-
-    def test_category_creation(self):
-        """Test that a category can be created."""
-        category = Category.objects.create(
-            title="Fiction",
-            slug="fiction",
-            description="Fiction books",
-            active=True
-        )
-        self.assertEqual(category.title, "Fiction")
-        self.assertEqual(category.slug, "fiction")
-        self.assertTrue(category.active)
-
-
-class ProductModelTest(TestCase):
-    """Test cases for Product model."""
+class TestProductViewSet(APITestCase):
+    client = APIClient()
 
     def setUp(self):
-        self.category = Category.objects.create(
-            title="Fiction",
-            slug="fiction",
-            description="Fiction books"
+        self.category = CategoryFactory()
+        self.product = ProductFactory(
+            title='pro controller',
+            price=200.00,
+            category=[self.category],
         )
 
-    def test_product_creation(self):
-        """Test that a product can be created."""
-        product = Product.objects.create(
-            title="Test Book",
-            description="A test book description",
-            price=2999,
-            active=True
+    def test_get_all_products(self):
+        response = self.client.get(
+            reverse('product-list', kwargs={'version': 'v1'})
         )
-        product.category.add(self.category)
 
-        self.assertEqual(product.title, "Test Book")
-        self.assertEqual(product.price, 2999)
-        self.assertTrue(product.active)
-        self.assertEqual(product.category.count(), 1)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        product_data = json.loads(response.content)
+        self.assertEqual(product_data['results'][0]['title'], self.product.title)
+        self.assertEqual(product_data['results'][0]['price'], self.product.price)
+        self.assertEqual(product_data['results'][0]['active'], self.product.active)
+        self.assertEqual(product_data['results'][0]['category'][0]['title'], self.category.title)
+
+    def test_create_product(self):
+        category = CategoryFactory()
+        data = json.dumps({
+            'title': 'notebook',
+            'price': 800.00,
+            'categories_id': [category.id]
+        })
+
+        response = self.client.post(
+            reverse('product-list', kwargs={'version': 'v1'}),
+            data=data,
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        created_product = Product.objects.get(title='notebook')
+
+        self.assertEqual(created_product.title, 'notebook')
+        self.assertEqual(created_product.price, 800.00)
+        self.assertTrue(created_product.category.filter(id=category.id).exists())
+
+class TestCategoryViewSet(APITestCase):
+    client = APIClient()
+
+    def setUp(self):
+        self.category = CategoryFactory(title='books')
+
+    def test_get_all_catogories(self):
+        response = self.client.get(
+            reverse('category-list', kwargs={'version': 'v1'})
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        category_data = json.loads(response.content)
+        self.assertEqual(category_data['results'][0]['title'], self.category.title)
+
+    def test_create_category(self):
+        data = json.dumps({
+            'title': 'technology'
+        })
+
+        response = self.client.post(
+            reverse('category-list', kwargs={'version': 'v1'}),
+            data=data,
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        created_category = Category.objects.get(title='technology')
+
+        self.assertEqual(created_category.title, 'technology')
+
