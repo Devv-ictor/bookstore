@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from dotenv import load_dotenv
 from pathlib import Path
+from django.core.management.utils import get_random_secret_key
 
 load_dotenv(".env.dev")
 
@@ -95,7 +96,7 @@ DATABASES = {
 }
 
 
-# Password validation
+# Password validationor get_random_secret_key()
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -143,7 +144,7 @@ REST_FRAMEWORK = {
 
 INTERNAL_IPS = ["127.0.0.1"]
 
-SECRET_KEY = os.environ.get("SECRET_KEY")
+SECRET_KEY = os.environ.get("SECRET_KEY") or get_random_secret_key()
 
 DEBUG = int(os.environ.get("DEBUG", default=0))
 
