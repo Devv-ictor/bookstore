@@ -1,0 +1,34 @@
+services:
+  backend:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/usr/source/app/
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=1
+      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+      - SQL_ENGINE=django.db.backends.sqlite3
+      - SQL_DATABASE=db.sqlite3
+      - SECRET_KEY=django-insecure-development-key-not-for-production
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=dev
+      - POSTGRES_PASSWORD=dev
+      - POSTGRES_DB=bookstore_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev -d bookstore_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
