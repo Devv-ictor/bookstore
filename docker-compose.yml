@@ -6,6 +6,12 @@ services:
       - .:/usr/source/app/
     ports:
       - "8000:8000"
+    environment:
+      - DEBUG=1
+      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+      - SQL_ENGINE=django.db.backends.sqlite3
+      - SQL_DATABASE=db.sqlite3
+      - SECRET_KEY=django-insecure-development-key-not-for-production
     depends_on:
       db:
         condition: service_healthy
